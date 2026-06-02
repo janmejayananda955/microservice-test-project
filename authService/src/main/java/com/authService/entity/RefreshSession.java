@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "refresh_sessions")
+@Table(name = "refresh_sessions", indexes = {@Index(name = "idx_refresh_token", columnList = "refreshToken")})
 @Getter
 @Setter
 @Builder
@@ -20,6 +20,7 @@ public class RefreshSession {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(nullable = false, unique = true)
     private String refreshToken;
 
     @CreationTimestamp

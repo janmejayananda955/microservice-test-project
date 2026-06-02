@@ -42,7 +42,7 @@ public class JwtFilterChain extends OncePerRequestFilter {
                         .map(CustomUserDetails::new)
                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
                 UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(username,null,userDetails.getAuthorities());
+                        new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
             filterChain.doFilter(request, response);

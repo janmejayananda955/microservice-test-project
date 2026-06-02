@@ -10,4 +10,10 @@ public interface AuthService {
     ApiResponse<?> register(RegisterRequestDto registerRequestDto);
 
     ApiResponse<?> login(LoginRequestDto loginRequestDto, HttpServletRequest request, HttpServletResponse response);
+
+    ApiResponse<?> refresh(String incomingRefreshToken, HttpServletRequest request, HttpServletResponse response);
+
+    ApiResponse<?> logout(String refreshToken, HttpServletResponse response);
+
+    ApiResponse<?> logoutAll(String refreshToken, HttpServletResponse response);
 }

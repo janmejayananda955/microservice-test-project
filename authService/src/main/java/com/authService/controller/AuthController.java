@@ -9,10 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/v1/auth")
@@ -31,4 +28,19 @@ public class AuthController {
         return authService.login(loginRequestDto, request, response);
     }
 
+    @GetMapping("/refresh-token")
+    public ApiResponse<?> refresh(@CookieValue(name = "refreshToken", required = false) String incomingRefreshToken,
+            HttpServletRequest request, HttpServletResponse response) {
+        return authService.refresh(incomingRefreshToken, request, response);
+    }
+
+    @GetMapping("/logout")
+    public ApiResponse<?> logout(@CookieValue(name = "refreshToken", required = false) String refreshToken, HttpServletResponse response) {
+        return authService.logout(refreshToken, response);
+    }
+
+    @GetMapping("/logout-all")
+    public ApiResponse<?> logoutAll(@CookieValue(name = "refreshToken", required = false) String refreshToken, HttpServletResponse response) {
+        return authService.logoutAll(refreshToken, response);
+    }
 }
