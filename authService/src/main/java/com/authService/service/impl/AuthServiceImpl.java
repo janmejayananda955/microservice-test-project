@@ -77,7 +77,10 @@ public class AuthServiceImpl implements AuthService {
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userRepository.findByEmail(loginRequestDto.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("Invalid email or password"));
-
+        // if user exceeded the refresh token limit
+        if (refreshSessionRepository.countActiveByUser(user) >= 3) {
+            throw new ResourceNotFoundException("User exceeded the device login limit");
+        }
         String accessToken = authUtil.generateAccessToken(customUserDetails);
         String refreshToken = authUtil.generateRefreshToken(customUserDetails);
         // save refresh token in db
@@ -147,6 +150,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public ApiResponse<?> logoutAll(String incomingRefreshToken, HttpServletResponse response) {
         if (incomingRefreshToken == null) {
             throw new InvalidCredentialsException("Unauthorized");

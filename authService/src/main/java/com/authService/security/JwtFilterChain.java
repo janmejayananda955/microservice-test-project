@@ -58,7 +58,8 @@ public class JwtFilterChain extends OncePerRequestFilter {
     }
 
     private void sendErrorResponse(HttpServletResponse response, String message, Exception e) throws IOException {
-        log.error("JWT filter error: {}", message, e);
+        log.warn("JWT filter error: {}", message);
+        log.error("JWT filter error: {}", e.getMessage());
         response.setContentType("application/json");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"" + message + "\"}");
