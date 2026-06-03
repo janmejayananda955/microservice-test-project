@@ -128,11 +128,17 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ApiResponse<?> logout(String incomingRefreshToken, HttpServletResponse response) {
-        if(incomingRefreshToken == null){
+        if (incomingRefreshToken == null) {
             throw new InvalidCredentialsException("Unauthorized");
         }
+        // verify with both access and refresh token
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         RefreshSession session = refreshSessionRepository.findByRefreshToken(DigestUtils.sha256Hex(incomingRefreshToken))
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid refresh token"));
+        if (!userDetails.getId().equals(session.getUser().getId())) {
+            throw new InvalidCredentialsException("Unauthorized");
+        }
         session.setRevoked(true);
         refreshSessionRepository.save(session);
         // clear cookie
@@ -142,16 +148,21 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ApiResponse<?> logoutAll(String incomingRefreshToken, HttpServletResponse response) {
-        if(incomingRefreshToken == null){
+        if (incomingRefreshToken == null) {
             throw new InvalidCredentialsException("Unauthorized");
         }
-
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+
         RefreshSession session = refreshSessionRepository.findByRefreshToken(DigestUtils.sha256Hex(incomingRefreshToken))
                 .orElseThrow(() -> new InvalidCredentialsException("Invalid refresh token"));
+        if (!userDetails.getId().equals(session.getUser().getId())) {
+            throw new InvalidCredentialsException("Unauthorized");
+        }
         refreshSessionRepository.revokeAllByUserId(userDetails.getId());
-        return null;
+        authUtil.clearRefreshTokenInCookie(response);
+        return ApiResponse.success(HttpStatus.OK.value(), "Logout all devices successful", null);
     }
 
     // Helper methods

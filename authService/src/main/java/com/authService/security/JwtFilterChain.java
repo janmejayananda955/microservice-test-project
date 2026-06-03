@@ -2,6 +2,7 @@ package com.authService.security;
 
 import com.authService.exception.ResourceNotFoundException;
 import com.authService.repository.UserRepository;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,7 +21,6 @@ import java.io.IOException;
 @Slf4j
 public class JwtFilterChain extends OncePerRequestFilter {
     private final UserRepository userRepository;
-
     private final AuthUtil authUtil;
 
     @Override
@@ -33,23 +33,34 @@ public class JwtFilterChain extends OncePerRequestFilter {
             return;
         }
 
-        try{
+        try {
             String token = header.split(" ")[1];
             String username = authUtil.getUsernameFromToken(token);
 
-            if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 CustomUserDetails userDetails = userRepository.findByEmail(username)
                         .map(CustomUserDetails::new)
                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+//                UsernamePasswordAuthenticationToken authenticationToken =
+//                        new UsernamePasswordAuthenticationToken(
+//                                userDetails, null, userDetails.getAuthorities());
+//                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                //---------OR----------------
+                SecurityContextHolder.getContext().setAuthentication(
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
             }
             filterChain.doFilter(request, response);
-
-        }catch (Exception e){
-            log.error("Error in JWT filter", e);
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid token");
+        } catch (SignatureException e) {
+            sendErrorResponse(response, "Invalid JWT signature", e);
+        } catch (Exception e) {
+            sendErrorResponse(response, "Invalid token", e);
         }
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, String message, Exception e) throws IOException {
+        log.error("JWT filter error: {}", message, e);
+        response.setContentType("application/json");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"" + message + "\"}");
     }
 }
