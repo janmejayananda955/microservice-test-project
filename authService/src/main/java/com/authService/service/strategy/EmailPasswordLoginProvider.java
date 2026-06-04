@@ -4,6 +4,7 @@ import com.authService.dto.LoginRequestDto;
 import com.authService.entity.RefreshSession;
 import com.authService.entity.User;
 import com.authService.exception.ApiResponse;
+import com.authService.exception.InvalidCredentialsException;
 import com.authService.exception.ResourceNotFoundException;
 import com.authService.repository.RefreshSessionRepository;
 import com.authService.repository.UserRepository;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -43,15 +45,22 @@ public class EmailPasswordLoginProvider implements LoginProvider {
             throw new ResourceNotFoundException("Login request cannot be null");
         }
 
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequestDto.getEmail(),
-                        loginRequestDto.getPassword()
-                )
-        );
-        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userRepository.findByEmail(loginRequestDto.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("Invalid email or password"));
+                .orElseThrow(() -> new ResourceNotFoundException("User does not exist"));
+
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequestDto.getEmail(),
+                            loginRequestDto.getPassword()
+                    )
+            );
+        } catch (BadCredentialsException e) {
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+        CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
 
         if (refreshSessionRepository.countActiveByUser(user) >= 3) {
             throw new ResourceNotFoundException("User exceeded the device login limit");

@@ -25,6 +25,7 @@ public class AuthUtil {
     private SecretKey accessSecretKey() {
         return Keys.hmacShaKeyFor(JWT_ACCESS_SECRET.getBytes(StandardCharsets.UTF_8));
     }
+
     private SecretKey refreshSecretKey() {
         return Keys.hmacShaKeyFor(JWT_REFRESH_SECRET.getBytes(StandardCharsets.UTF_8));
     }
@@ -48,7 +49,7 @@ public class AuthUtil {
                 .getSubject();
     }
 
-    public String generateRefreshToken(CustomUserDetails userDetails){
+    public String generateRefreshToken(CustomUserDetails userDetails) {
         return Jwts.builder()
                 .subject(userDetails.getUsername())
                 .claim("id", userDetails.getId())
@@ -78,5 +79,14 @@ public class AuthUtil {
                 .maxAge(0)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    public String getRoleFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(accessSecretKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
     }
 }

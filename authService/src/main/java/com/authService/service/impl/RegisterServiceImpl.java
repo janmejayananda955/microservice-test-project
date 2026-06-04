@@ -2,6 +2,7 @@ package com.authService.service.impl;
 
 import com.authService.dto.RegisterRequestDto;
 import com.authService.entity.User;
+import com.authService.entity.enums.Role;
 import com.authService.exception.ApiResponse;
 import com.authService.exception.ResourceNotFoundException;
 import com.authService.repository.UserRepository;
@@ -25,13 +26,17 @@ public class RegisterServiceImpl implements RegisterService {
         if (registerRequestDto == null) {
             throw new ResourceNotFoundException("Register request cannot be null");
         }
+        // check if role is admin
+        if (registerRequestDto.getRole().equals(Role.ADMIN)) {
+            throw new ResourceNotFoundException("Admin role is not allowed");
+        }
         // if user already exists
         userRepository.findByEmail(registerRequestDto.getEmail())
                 .ifPresent(u -> {
                     throw new ResourceNotFoundException("User already exists");
                 });
         User user = User.builder()
-                .fullName(registerRequestDto.getFullName())
+                .role(registerRequestDto.getRole())
                 .email(registerRequestDto.getEmail())
                 .password(passwordEncoder.encode(registerRequestDto.getPassword()))
                 .build();

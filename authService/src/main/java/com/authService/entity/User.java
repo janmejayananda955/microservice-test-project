@@ -1,5 +1,6 @@
 package com.authService.entity;
 
+import com.authService.entity.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,7 +11,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users", indexes = {
-    @Index(name = "idx_users_email", columnList = "email")
+        @Index(name = "idx_users_email", columnList = "email")
 })
 @Getter
 @Setter
@@ -22,8 +23,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
-    private String fullName;
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     @Column(unique = true, nullable = false)
     private String email;

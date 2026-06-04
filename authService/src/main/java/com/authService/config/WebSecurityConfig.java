@@ -29,7 +29,7 @@ public class WebSecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/v1/auth/login", "/v1/auth/register", "/v1/auth/refresh-token").permitAll()
+                        .requestMatchers("/v1/auth/login", "/v1/auth/register", "/v1/auth/refresh-token", "/error").permitAll()
                         .requestMatchers("/v1/auth/logout", "/v1/auth/logout-all").authenticated()
                         .anyRequest().authenticated()
                 )

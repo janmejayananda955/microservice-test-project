@@ -10,11 +10,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -36,18 +39,25 @@ public class JwtFilterChain extends OncePerRequestFilter {
         try {
             String token = header.split(" ")[1];
             String username = authUtil.getUsernameFromToken(token);
+            String role = authUtil.getRoleFromToken(token);
+
+            if (role != null && !role.startsWith("ROLE_")) {
+                role = "ROLE_" + role;
+            }
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 CustomUserDetails userDetails = userRepository.findByEmail(username)
                         .map(CustomUserDetails::new)
                         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                List<GrantedAuthority> authorities =
+                        List.of(new SimpleGrantedAuthority(role));
 //                UsernamePasswordAuthenticationToken authenticationToken =
 //                        new UsernamePasswordAuthenticationToken(
 //                                userDetails, null, userDetails.getAuthorities());
 //                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
                 //---------OR----------------
                 SecurityContextHolder.getContext().setAuthentication(
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
+                        new UsernamePasswordAuthenticationToken(userDetails, null, authorities));
             }
             filterChain.doFilter(request, response);
         } catch (SignatureException e) {
