@@ -30,6 +30,7 @@ public class RefreshSession {
 
     private LocalDateTime expiresAt;
 
+    @Builder.Default
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean revoked = false;
 
